@@ -17,16 +17,19 @@ class QLearning(object):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
 
-    def run(self, board, episodes):
+    def run(self, board, episodes, 
+        episode_callback=lambda e, b : None, 
+        action_callback=lambda e, a, r, b: None):
         '''Creates a sokoban instance and initializes it with a level'''
         mover = se.Mover(board)
         self.q_values.clear()
         for e in range(episodes):
-            self.run_episode(mover, e)
+            self.run_episode(mover, e, action_callback)
+            episode_callback(e, mover.board)
             mover = se.Mover(mover.initial_board)
         return self.q_values
 
-    def run_episode(self, mover, episode):
+    def run_episode(self, mover, episode, action_callback):
         '''Creates a sokoban instance and initializes it with a level'''
         moves = 0
         while not StateHelper.is_terminal(mover.board) and moves < MAX_MOVES:
@@ -37,12 +40,7 @@ class QLearning(object):
             new_q = (self.get_q(state, action) 
                 + self.learning_rate * (reward + self.discount_factor * self.maximize_q(mover.board) - self.get_q(state, action)))
             self.q_values[state, action] = new_q
-
-            # Print the board
-            os.system('clear')
-            print(action, reward, '\n')
-            print(mover.board)
-            #time.sleep(0.15)
+            action_callback(episode, action, reward, mover.board)
 
     def maximize_q(self, board):
         '''Creates a sokoban instance and initializes it with a level'''
