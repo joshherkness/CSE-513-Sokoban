@@ -34,7 +34,7 @@ class Sokoban(object):
                     if not visited.__contains__(near):
                         stack.add(near)
         all_positions = set(self.board._graph.reachables(10, is_obstacle_callable=lambda x: False))
-        deadlocked_positions = all_positions.difference(visited)
+        deadlocked_positions = all_positions.difference(visited)zzzzz
         # Apply deadlocks
         for x in deadlocked_positions:
             board_cell = self.board.__getitem__(x)
