@@ -1,5 +1,5 @@
-
 import sokoenginepy as se
+from functools import reduce
 
 class StateHelper(object):
     '''Helper for state'''
@@ -8,24 +8,44 @@ class StateHelper(object):
     def take_action(mover, direction):
         '''Takes an action, returning a reward'''
         board = mover.board
-        state = se.HashedBoardState(board)
+        state = mover.state
         pusher_id = mover.selected_pusher
         pusher_position = state.pusher_position(pusher_id)
-        neighbor_board_cells = StateHelper.near_far_cells(board, pusher_position, direction)
-        n_0 = neighbor_board_cells['near']
-        n_1 = neighbor_board_cells['far']
+        near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
 
-        # if ():
-        #     # unrecoverable
-        # elif ():
-        #     # Box would be pushed
-        # elif ():
-        #     #
+        # Determine the reward before moving
+        pre_reward = 0
+        if near_cell.has_box and (far_cell.is_wall or far_cell.has_box) :
+            # Box pushed against wall or box
+            pre_reward = -1
+        elif near_cell.has_box and far_cell.is_empty_floor:
+            # Box pushed 
+            pre_reward = 5
+        elif near_cell.has_box and far_cell.has_goal:
+            # Box pushed on goal
+            pre_reward = 25
+        elif near_cell.has_box and near_cell.has_goal and far_cell.is_empty_floor:
+            # Box pushed off goal
+            pre_reward = -5
 
+        # Take the action
         try:
             mover.move(direction)
-        except se.IllegalMoveError:
-            print("IllegalMoveError risen!")
+        except:
+            pre_reward = -1
+
+        pusher_position = state.pusher_position(pusher_id)
+        near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
+
+        # Determine the reward after moving
+        post_reward = 0
+        if near_cell.has_box and near_cell.is_deadlock:
+            pre_reward = -100
+        elif near_cell.has_box and StateHelper.is_freeze_deadlock(board, near):
+            pre_reward = -25
+
+        # Return the worst reward
+        return min(post_reward, pre_reward)
 
     @staticmethod
     def near_far_cells(board, position, direction):
@@ -69,3 +89,52 @@ class StateHelper(object):
         left = board.neighbor(position, se.Direction.LEFT)
         right = board.neighbor(position, se.Direction.RIGHT)
         return up, down, left, right
+
+    @staticmethod
+    def is_freeze_deadlock(board, position):
+        '''returns a boolean indicating whether or not there is a freeze deadlock'''
+        is_frozen, frozen_cells = StateHelper.is_freeze(board, position)
+        all_on_goals = reduce(lambda x,y: x and y.has_goal, frozen_cells, True)
+        return is_frozen and not all_on_goals
+
+    @staticmethod
+    def is_freeze(board, position, checked=[], frozen_cells=[]):
+        '''returns a boolean indicating whether or not the block at that position is frozen 
+        and a list of blocks in the freeze deadlock'''
+        # Remember positions we have already checked to avoid circular checks
+        checked.append(position)
+
+        # Get the immediate neighbors at the position
+        up, down, left, right = StateHelper.neighbor_positions(board, position)
+        up_cell, down_cell, left_cell, right_cell = StateHelper.neighbor_cells(board, position)
+        
+        # Check if there is a vertical deadlock
+        vertical_deadlock = False
+        if left_cell.is_wall or left in checked or right_cell.is_wall or right in checked:
+            vertical_deadlock = True
+        elif left_cell.is_deadlock and right_cell.is_deadlock:
+            vertical_deadlock = True
+        elif left_cell.has_box or right_cell.has_box:
+            if left_cell.has_box:
+                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, left, checked, frozen_cells) 
+            if right_cell.has_box:
+                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, right, checked, frozen_cells) 
+
+        # Check if there is a horizontal deadlock
+        horizontal_deadlock = False
+        if up_cell.is_wall or up in checked or down_cell.is_wall or down in checked:
+            horizontal_deadlock = True
+        elif up_cell.is_deadlock and down_cell.is_deadlock:
+            horizontal_deadlock = True
+        elif up_cell.has_box or down_cell.has_box:
+            if up_cell.has_box:
+                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, up, checked, frozen_cells) 
+            if down_cell.has_box:
+                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, down, checked, frozen_cells) 
+
+        cell_is_frozen = vertical_deadlock and horizontal_deadlock
+
+        if cell_is_frozen:
+            frozen_cells.append(board.__getitem__(position))
+
+        return cell_is_frozen, frozen_cells
