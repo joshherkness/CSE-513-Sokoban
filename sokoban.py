@@ -42,7 +42,7 @@ class Sokoban(object):
             board_cell.is_deadlock = True
 
 def main():
-    sokoban = Sokoban('levels/level_4.txt')
+    sokoban = Sokoban('levels/level_2.txt')
     qlearner = QLearning(DIRECTIONS)
-    qlearner.run(sokoban.board, 100)
+    qlearner.run(sokoban.board, 200)
 main()

@@ -18,22 +18,23 @@ class StateHelper(object):
         if near_cell.has_box and (far_cell.is_wall or far_cell.has_box) :
             # Box pushed against wall or box
             reward = -1
-        elif near_cell.has_box and far_cell.is_empty_floor:
-            # Box pushed 
-            reward = 5
-        elif near_cell.has_box and far_cell.has_goal:
-            # Box pushed on goal
-            reward = 25
+        elif near_cell.has_box and near_cell.has_goal and far_cell.has_goal:
+            reward = 0
         elif near_cell.has_box and near_cell.has_goal and far_cell.is_empty_floor:
             # Box pushed off goal
             reward = -5
+        elif near_cell.has_box and far_cell.has_goal:
+            # Box pushed on goal
+            reward = 100
+        elif near_cell.has_box and far_cell.is_empty_floor:
+            # Box pushed 
+            reward = 1
 
         # Take the action
         try:
             mover.move(direction)
         except:
             reward = -1
-
         pusher_position = state.pusher_position(pusher_id)
         near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
 
@@ -141,7 +142,6 @@ class StateHelper(object):
     def is_terminal(board):
         '''returns a boolean indicating whether or not the board is terminal'''
         state = se.HashedBoardState(board)
-
         all_boxes_frozen = True
         any_box_in_simple_deadlock = False
         for box_id, box_pos in state.boxes_positions.items():

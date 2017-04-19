@@ -5,10 +5,12 @@ import os
 import time
 from services.state_helper import StateHelper
 
+MAX_MOVES = 50
+
 class QLearning(object):
     '''Creates a sokoban instance and initializes it with a level'''
 
-    def __init__(self, actions, learning_rate=0.2, discount_factor=0.8):
+    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9):
         '''Creates a sokoban instance and initializes it with a level'''
         self.q_values = {}
         self.actions = actions
@@ -26,7 +28,9 @@ class QLearning(object):
 
     def run_episode(self, mover, episode):
         '''Creates a sokoban instance and initializes it with a level'''
-        while not StateHelper.is_terminal(mover.board):
+        moves = 0
+        while not StateHelper.is_terminal(mover.board) and moves < MAX_MOVES:
+            moves = moves + 1
             state = str(mover.board)
             action = self.maximize_action(mover.board)
             reward = StateHelper.take_action(mover, action)
@@ -38,7 +42,7 @@ class QLearning(object):
             os.system('clear')
             print(action, reward, '\n')
             print(mover.board)
-            time.sleep(0.2)
+            #time.sleep(0.15)
 
     def maximize_q(self, board):
         '''Creates a sokoban instance and initializes it with a level'''
