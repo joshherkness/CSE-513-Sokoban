@@ -138,3 +138,16 @@ class StateHelper(object):
             frozen_cells.append(board.__getitem__(position))
 
         return cell_is_frozen, frozen_cells
+
+    @staticmethod
+    def is_terminal(board):
+        '''returns a boolean indicating whether or not the board is terminal'''
+        state = se.HashedBoardState(board)
+
+        all_boxes_frozen = True
+        any_box_in_simple_deadlock = False
+        for box_id, box_pos in state.boxes_positions.items():
+            all_boxes_frozen  = all_boxes_frozen and StateHelper.is_freeze_deadlock(board, box_pos)
+            any_box_in_simple_deadlock = any_box_in_simple_deadlock or board.__getitem__(box_pos).is_deadlock
+
+        return state.is_solved() or all_boxes_frozen or any_box_in_simple_deadlock

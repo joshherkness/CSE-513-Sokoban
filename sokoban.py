@@ -42,7 +42,11 @@ class Sokoban(object):
 
 def main():
     sokoban = Sokoban('levels/level_0.txt')
+
+    print(sokoban.board)
+    print(StateHelper.is_terminal(sokoban.board))
+    
     print('reward:', StateHelper.take_action(sokoban.mover, se.Direction.UP))
     print(sokoban.board)
-    
+    print(StateHelper.is_terminal(sokoban.board))
 main()
