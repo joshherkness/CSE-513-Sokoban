@@ -14,38 +14,36 @@ class StateHelper(object):
         near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
 
         # Determine the reward before moving
-        pre_reward = 0
+        reward = 0
         if near_cell.has_box and (far_cell.is_wall or far_cell.has_box) :
             # Box pushed against wall or box
-            pre_reward = -1
+            reward = -1
         elif near_cell.has_box and far_cell.is_empty_floor:
             # Box pushed 
-            pre_reward = 5
+            reward = 5
         elif near_cell.has_box and far_cell.has_goal:
             # Box pushed on goal
-            pre_reward = 25
+            reward = 25
         elif near_cell.has_box and near_cell.has_goal and far_cell.is_empty_floor:
             # Box pushed off goal
-            pre_reward = -5
+            reward = -5
 
         # Take the action
         try:
             mover.move(direction)
         except:
-            pre_reward = -1
+            reward = -1
 
         pusher_position = state.pusher_position(pusher_id)
         near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
 
         # Determine the reward after moving
-        post_reward = 0
         if near_cell.has_box and near_cell.is_deadlock:
-            pre_reward = -100
+            reward = min(-100, reward)
         elif near_cell.has_box and StateHelper.is_freeze_deadlock(board, near):
-            pre_reward = -25
+            reward = min(-25, reward)
 
-        # Return the worst reward
-        return min(post_reward, pre_reward)
+        return reward
 
     @staticmethod
     def near_far_cells(board, position, direction):
@@ -93,7 +91,7 @@ class StateHelper(object):
     @staticmethod
     def is_freeze_deadlock(board, position):
         '''returns a boolean indicating whether or not there is a freeze deadlock'''
-        is_frozen, frozen_cells = StateHelper.is_freeze(board, position)
+        is_frozen, frozen_cells = StateHelper.is_freeze(board, position, [], [])
         all_on_goals = reduce(lambda x,y: x and y.has_goal, frozen_cells, True)
         return is_frozen and not all_on_goals
 
@@ -149,5 +147,4 @@ class StateHelper(object):
         for box_id, box_pos in state.boxes_positions.items():
             all_boxes_frozen  = all_boxes_frozen and StateHelper.is_freeze_deadlock(board, box_pos)
             any_box_in_simple_deadlock = any_box_in_simple_deadlock or board.__getitem__(box_pos).is_deadlock
-
         return state.is_solved() or all_boxes_frozen or any_box_in_simple_deadlock

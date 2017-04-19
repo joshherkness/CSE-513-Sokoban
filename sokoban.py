@@ -1,5 +1,6 @@
 import sokoenginepy as se
 from services.state_helper import StateHelper
+from services.qlearning_service import QLearning
 
 DIRECTIONS = [se.Direction.RIGHT, se.Direction.DOWN, se.Direction.LEFT, se.Direction.UP]
 
@@ -34,19 +35,14 @@ class Sokoban(object):
                     if not visited.__contains__(near):
                         stack.add(near)
         all_positions = set(self.board._graph.reachables(10, is_obstacle_callable=lambda x: False))
-        deadlocked_positions = all_positions.difference(visited)zzzzz
+        deadlocked_positions = all_positions.difference(visited)
         # Apply deadlocks
         for x in deadlocked_positions:
             board_cell = self.board.__getitem__(x)
             board_cell.is_deadlock = True
 
 def main():
-    sokoban = Sokoban('levels/level_0.txt')
-
-    print(sokoban.board)
-    print(StateHelper.is_terminal(sokoban.board))
-    
-    print('reward:', StateHelper.take_action(sokoban.mover, se.Direction.UP))
-    print(sokoban.board)
-    print(StateHelper.is_terminal(sokoban.board))
+    sokoban = Sokoban('levels/level_4.txt')
+    qlearner = QLearning(DIRECTIONS)
+    qlearner.run(sokoban.board, 100)
 main()
