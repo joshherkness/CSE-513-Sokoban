@@ -1,17 +1,13 @@
 import sokoenginepy as se
 import random
 import math
-import os
-import time
 from services.state_helper import StateHelper
 
-MAX_MOVES = 50
+class Solver(object):
+    '''Q learning solver for a sokoban puzzle.'''
 
-class QLearning(object):
-    '''Creates a sokoban instance and initializes it with a level'''
-
-    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9):
-        '''Creates a sokoban instance and initializes it with a level'''
+    def __init__(self, actions, learning_rate=0.99, discount_factor=0.2):
+        '''Iitializer for the solver'''
         self.q_values = {}
         self.actions = actions
         self.learning_rate = learning_rate
@@ -19,8 +15,8 @@ class QLearning(object):
 
     def run(self, board, episodes, 
         episode_callback=lambda e, b : None, 
-        action_callback=lambda e, a, r, b: None):
-        '''Creates a sokoban instance and initializes it with a level'''
+        action_callback=lambda e, a, m, r, b: None):
+        '''Runs a series of episodes using q learning'''
         mover = se.Mover(board)
         self.q_values.clear()
         for e in range(episodes):
@@ -29,10 +25,10 @@ class QLearning(object):
             mover = se.Mover(mover.initial_board)
         return self.q_values
 
-    def run_episode(self, mover, episode, action_callback):
-        '''Creates a sokoban instance and initializes it with a level'''
+    def run_episode(self, mover, episode, action_callback, max_moves=1000):
+        '''Runs a single episode using q learning'''
         moves = 0
-        while not StateHelper.is_terminal(mover.board) and moves < MAX_MOVES:
+        while not StateHelper.is_terminal(mover.board) and (moves < max_moves or max_moves == -1):
             moves = moves + 1
             state = str(mover.board)
             action = self.maximize_action(mover.board)
@@ -40,10 +36,10 @@ class QLearning(object):
             new_q = (self.get_q(state, action) 
                 + self.learning_rate * (reward + self.discount_factor * self.maximize_q(mover.board) - self.get_q(state, action)))
             self.q_values[state, action] = new_q
-            action_callback(episode, action, reward, mover.board)
+            action_callback(episode, action, moves, reward, mover.board)
 
     def maximize_q(self, board):
-        '''Creates a sokoban instance and initializes it with a level'''
+        '''Calculates the maximum q value that can be reached from the current state in a single action'''
         state = str(board)
         max_q = float('-inf')
 

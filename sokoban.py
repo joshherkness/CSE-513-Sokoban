@@ -1,6 +1,8 @@
 import sokoenginepy as se
+import os
+import time
 from services.state_helper import StateHelper
-from services.qlearning_service import QLearning
+from services.qlearning_service import Solver
 
 DIRECTIONS = [se.Direction.RIGHT, se.Direction.DOWN, se.Direction.LEFT, se.Direction.UP]
 
@@ -42,15 +44,18 @@ class Sokoban(object):
             board_cell.is_deadlock = True
 
 def main():
-    sokoban = Sokoban('levels/level_5.txt')
-    qlearner = QLearning(DIRECTIONS)
-    qlearner.run(sokoban.board, 200, action_callback=render_board)
+    sokoban = Sokoban('levels/level_6.txt')
+    solver = Solver(DIRECTIONS)
+    solver.run(sokoban.board, 200, action_callback=render_board)
 
-def render_board(episode, action, reward, board):
+def render_board(episode, action, move, reward, board):
     # Print the board
     #os.system('clear')
-    print(action, reward, '\n')
+    print('Episode: ', episode)
+    print('Move: ', move)
+    print('Action: ', action)
+    print('Reward: ', reward)
     print(board)
-    #time.sleep(0.15)
+    time.sleep(0.01)
     
 main()

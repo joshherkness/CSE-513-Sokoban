@@ -22,7 +22,7 @@ class StateHelper(object):
             reward = 0
         elif near_cell.has_box and near_cell.has_goal and far_cell.is_empty_floor:
             # Box pushed off goal
-            reward = -5
+            reward = -1
         elif near_cell.has_box and far_cell.has_goal:
             # Box pushed on goal
             reward = 100
@@ -40,9 +40,9 @@ class StateHelper(object):
 
         # Determine the reward after moving
         if near_cell.has_box and near_cell.is_deadlock:
-            reward = min(-100, reward)
+            reward = min(-1000, reward)
         elif near_cell.has_box and StateHelper.is_freeze_deadlock(board, near):
-            reward = min(-25, reward)
+            reward = min(-250, reward)
 
         return reward
 
@@ -100,6 +100,7 @@ class StateHelper(object):
     def is_freeze(board, position, checked=[], frozen_cells=[]):
         '''returns a boolean indicating whether or not the block at that position is frozen 
         and a list of blocks in the freeze deadlock'''
+
         # Remember positions we have already checked to avoid circular checks
         checked.append(position)
 
@@ -108,28 +109,28 @@ class StateHelper(object):
         up_cell, down_cell, left_cell, right_cell = StateHelper.neighbor_cells(board, position)
         
         # Check if there is a vertical deadlock
-        vertical_deadlock = False
+        horizontal_deadlock = False
         if left_cell.is_wall or left in checked or right_cell.is_wall or right in checked:
-            vertical_deadlock = True
+            horizontal_deadlock = True
         elif left_cell.is_deadlock and right_cell.is_deadlock:
-            vertical_deadlock = True
+            horizontal_deadlock = True
         elif left_cell.has_box or right_cell.has_box:
             if left_cell.has_box:
-                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, left, checked, frozen_cells) 
+                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, left, checked, frozen_cells) 
             if right_cell.has_box:
-                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, right, checked, frozen_cells) 
+                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, right, checked, frozen_cells) 
 
         # Check if there is a horizontal deadlock
-        horizontal_deadlock = False
+        vertical_deadlock = False
         if up_cell.is_wall or up in checked or down_cell.is_wall or down in checked:
-            horizontal_deadlock = True
+            vertical_deadlock = True
         elif up_cell.is_deadlock and down_cell.is_deadlock:
-            horizontal_deadlock = True
+            vertical_deadlock = True
         elif up_cell.has_box or down_cell.has_box:
             if up_cell.has_box:
-                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, up, checked, frozen_cells) 
+                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, up, checked, frozen_cells) 
             if down_cell.has_box:
-                horizontal_deadlock = horizontal_deadlock or StateHelper.is_freeze(board, down, checked, frozen_cells) 
+                vertical_deadlock = vertical_deadlock or StateHelper.is_freeze(board, down, checked, frozen_cells) 
 
         cell_is_frozen = vertical_deadlock and horizontal_deadlock
 
@@ -142,9 +143,9 @@ class StateHelper(object):
     def is_terminal(board):
         '''returns a boolean indicating whether or not the board is terminal'''
         state = se.HashedBoardState(board)
-        all_boxes_frozen = True
+        all_boxes_frozen = False
         any_box_in_simple_deadlock = False
         for box_id, box_pos in state.boxes_positions.items():
-            all_boxes_frozen  = all_boxes_frozen and StateHelper.is_freeze_deadlock(board, box_pos)
+            all_boxes_frozen  = all_boxes_frozen or StateHelper.is_freeze_deadlock(board, box_pos)
             any_box_in_simple_deadlock = any_box_in_simple_deadlock or board.__getitem__(box_pos).is_deadlock
         return state.is_solved() or all_boxes_frozen or any_box_in_simple_deadlock
