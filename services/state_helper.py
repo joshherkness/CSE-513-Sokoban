@@ -14,21 +14,21 @@ class StateHelper(object):
         near, far, near_cell, far_cell = StateHelper.near_far_cells(board, pusher_position, direction)
 
         # Determine the reward before moving
-        reward = 0
+        reward = -0.15
         if near_cell.has_box and (far_cell.is_wall or far_cell.has_box) :
             # Box pushed against wall or box
-            reward = -1
+            reward = -0.15
         elif near_cell.has_box and near_cell.has_goal and far_cell.has_goal:
-            reward = 0
+            reward = -0.15
         elif near_cell.has_box and near_cell.has_goal and far_cell.is_empty_floor:
             # Box pushed off goal
-            reward = -1
+            reward = -0.2
         elif near_cell.has_box and far_cell.has_goal:
             # Box pushed on goal
-            reward = 100
+            reward = 1
         elif near_cell.has_box and far_cell.is_empty_floor:
             # Box pushed 
-            reward = 1
+            reward = -0.01
 
         # Take the action
         try:
@@ -40,9 +40,9 @@ class StateHelper(object):
 
         # Determine the reward after moving
         if near_cell.has_box and near_cell.is_deadlock:
-            reward = min(-1000, reward)
+            reward = min(-1, reward)
         elif near_cell.has_box and StateHelper.is_freeze_deadlock(board, near):
-            reward = min(-250, reward)
+            reward = min(-1, reward)
 
         return reward
 

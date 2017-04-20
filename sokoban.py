@@ -44,18 +44,19 @@ class Sokoban(object):
             board_cell.is_deadlock = True
 
 def main():
-    sokoban = Sokoban('levels/level_6.txt')
+    sokoban = Sokoban('levels/level_8.txt')
     solver = Solver(DIRECTIONS)
-    solver.run(sokoban.board, 200, action_callback=render_board)
+    solver.run(sokoban.board, 10000, action_callback=render_board)
 
 def render_board(episode, action, move, reward, board):
     # Print the board
-    #os.system('clear')
+    os.system('clear')
     print('Episode: ', episode)
     print('Move: ', move)
     print('Action: ', action)
     print('Reward: ', reward)
     print(board)
-    time.sleep(0.01)
+    if episode > 9800:
+        time.sleep(0.1)
     
 main()

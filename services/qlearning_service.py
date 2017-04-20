@@ -6,7 +6,7 @@ from services.state_helper import StateHelper
 class Solver(object):
     '''Q learning solver for a sokoban puzzle.'''
 
-    def __init__(self, actions, learning_rate=0.99, discount_factor=0.2):
+    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9):
         '''Iitializer for the solver'''
         self.q_values = {}
         self.actions = actions
@@ -25,7 +25,7 @@ class Solver(object):
             mover = se.Mover(mover.initial_board)
         return self.q_values
 
-    def run_episode(self, mover, episode, action_callback, max_moves=1000):
+    def run_episode(self, mover, episode, action_callback, max_moves=-1):
         '''Runs a single episode using q learning'''
         moves = 0
         while not StateHelper.is_terminal(mover.board) and (moves < max_moves or max_moves == -1):
