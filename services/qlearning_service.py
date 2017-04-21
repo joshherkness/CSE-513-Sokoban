@@ -7,12 +7,13 @@ from services.state_helper import StateHelper
 class Solver(object):
     '''Q learning solver for a sokoban puzzle.'''
 
-    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9):
+    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9, max_actions=-1):
         '''Iitializer for the solver'''
         self.q_values = {}
         self.actions = actions
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
+        self.max_actions = max_actions
 
     def run(self, board, episodes,
         run_callback=lambda Q, b : None, 
@@ -27,12 +28,12 @@ class Solver(object):
         run_callback(self.q_values, mover.board)
         return self.q_values
 
-    def run_episode(self, mover, episode, action_callback, episode_callback, max_moves=-1):
+    def run_episode(self, mover, episode, action_callback, episode_callback):
         '''Runs a single episode using q learning'''
         moves = 0
         rewards = []
         start_time = time.time()
-        while not StateHelper.is_terminal(mover.board) and (moves < max_moves or max_moves == -1):
+        while not StateHelper.is_terminal(mover.board) and (moves < self.max_actions or self.max_actions == -1):
             moves = moves + 1
             state = str(mover.board)
             action = self.maximize_action(mover.board)
