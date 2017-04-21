@@ -1,6 +1,7 @@
 import sokoenginepy as se
 import random
 import math
+import time
 from services.state_helper import StateHelper
 
 class Solver(object):
@@ -13,30 +14,36 @@ class Solver(object):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
 
-    def run(self, board, episodes, 
-        episode_callback=lambda e, b : None, 
+    def run(self, board, episodes,
+        run_callback=lambda Q, b : None, 
+        episode_callback=lambda e, m, R, s, t, b : None, 
         action_callback=lambda e, a, m, r, b: None):
         '''Runs a series of episodes using q learning'''
         mover = se.Mover(board)
         self.q_values.clear()
         for e in range(episodes):
-            self.run_episode(mover, e, action_callback)
-            episode_callback(e, mover.board)
+            self.run_episode(mover, e, action_callback, episode_callback)
             mover = se.Mover(mover.initial_board)
+        run_callback(self.q_values, mover.board)
         return self.q_values
 
-    def run_episode(self, mover, episode, action_callback, max_moves=-1):
+    def run_episode(self, mover, episode, action_callback, episode_callback, max_moves=-1):
         '''Runs a single episode using q learning'''
         moves = 0
+        rewards = []
+        start_time = time.time()
         while not StateHelper.is_terminal(mover.board) and (moves < max_moves or max_moves == -1):
             moves = moves + 1
             state = str(mover.board)
             action = self.maximize_action(mover.board)
             reward = StateHelper.take_action(mover, action)
+            rewards.append(reward)
             new_q = (self.get_q(state, action) 
                 + self.learning_rate * (reward + self.discount_factor * self.maximize_q(mover.board) - self.get_q(state, action)))
             self.q_values[state, action] = new_q
             action_callback(episode, action, moves, reward, mover.board)
+        end_time = time.time()
+        episode_callback(episode, moves, rewards, mover.state.is_solved(), end_time - start_time, mover.board)
 
     def maximize_q(self, board):
         '''Calculates the maximum q value that can be reached from the current state in a single action'''
